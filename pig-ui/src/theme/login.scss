@@ -197,6 +197,52 @@
 
 /* ===== Modern Gradient 登录页样式 ===== */
 
+// ===== 背景插画 =====
+// backgroud.png 本体 2158x1196，插画墨迹只占到图片宽度的 61.5%（右侧是透明区），
+// 所以桌面端不能直接 cover 整屏：cover 会把透明区一起放大，插画右边界顶到视口
+// 一半以上，卡片无论怎么右移都会压住插画。桌面端（≥xl）改为贴左、按 60vw 定宽，
+// 墨迹右边界随之稳定落在视口 ~36.9vw 处，卡片按 .login-page 的 xl/2xl padding
+// 右移，两者之间恒有 100px 以上空隙，且与右下角二维码留出 46px 间隔。
+// 移动端/平板（<xl）保持铺满整屏的原有形态。
+.login-bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+}
+
+@media (min-width: 1280px) {
+	.login-bg {
+		// 60vw 宽、按原图比例定高，垂直居中贴左
+		left: 0;
+		right: auto;
+		top: 50%;
+		bottom: auto;
+		width: 60vw;
+		height: calc(60vw * 1196 / 2158);
+		transform: translateY(-50%);
+		background-position: center;
+		background-size: contain;
+	}
+
+	// 桌面端卡片右移：从居中改为靠右，右内边距同时避开右下角二维码
+	// （二维码 116px 宽 + 容器内边距/边框 ≈ 130px，另加 32/56px 右边距，
+	// 所以 xl 留 208px、2xl 留 232px，卡片右边缘与二维码左边缘恒有 46px 间隔）。
+	.login-page {
+		justify-content: flex-end;
+		padding-right: 208px;
+	}
+}
+
+@media (min-width: 1536px) {
+	.login-page {
+		padding-right: 232px;
+	}
+}
+
 // 登录卡片 - 浅色模式
 .login-card {
 	background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);

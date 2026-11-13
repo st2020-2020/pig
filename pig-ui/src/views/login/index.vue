@@ -1,6 +1,9 @@
 <template>
-	<div class="relative flex items-center justify-center min-h-screen overflow-hidden min-w-screen"
-		:style="backgroundStyle">
+	<div
+		class="login-page relative flex items-center justify-center min-h-screen overflow-hidden min-w-screen select-none">
+
+		<!-- 背景插画：桌面端贴左侧定宽，右侧留白给卡片；移动端铺满 -->
+		<div class="login-bg" aria-hidden="true" :style="{ backgroundImage: `url(${loginBg})` }"></div>
 
 		<!-- 右上角控制组件 -->
 		<div class="absolute z-20 top-6 right-6">
@@ -51,15 +54,10 @@
 </template>
 
 <script setup lang="ts" name="loginIndex">
-import { useThemeConfig } from '/@/stores/themeConfig';
 import { NextLoading } from '/@/utils/loading';
 import logo from '/@/assets/login/logo.svg';
-import loginBgLight from '/@/assets/login/login-bg.svg';
-import loginBgDark from '/@/assets/login/login-bg-dark.svg';
-import loginBgPhoneLight from '/@/assets/login/login-bg-phone.svg';
-import loginBgPhoneDark from '/@/assets/login/login-bg-phone-dark.svg';
+import loginBg from '/@/assets/login/backgroud.png';
 import { useI18n } from 'vue-i18n';
-import { useWindowSize } from '@vueuse/core';
 import { formatAxisI18n } from '/@/utils/formatTime';
 import { useMessage } from '/@/hooks/message';
 import { Session } from '/@/utils/storage';
@@ -79,8 +77,6 @@ const Qrcode = defineAsyncComponent(() => import('./component/qrcode.vue'));
 const Footer = defineAsyncComponent(() => import('./component/footer.vue'));
 
 // 定义变量内容
-const storesThemeConfig = useThemeConfig();
-const { themeConfig } = storeToRefs(storesThemeConfig);
 import { useSiteConfig } from '/@/stores/siteConfig';
 const { siteConfig } = storeToRefs(useSiteConfig());
 const { t } = useI18n();
@@ -95,26 +91,6 @@ const logoSrc = computed(() =>
 );
 // 用户名
 const username = ref('');
-
-// 响应式窗口宽度（自动清理）
-const { width: windowWidth } = useWindowSize();
-
-/**
- * 动态背景样式
- * 根据暗黑模式和响应式断点选择对应的 SVG 背景
- */
-const backgroundStyle = computed(() => {
-	const isDark = themeConfig.value.isDark;
-	const isMobile = windowWidth.value < 768; // md 断点
-	const bgUrl = isMobile
-		? (isDark ? loginBgPhoneDark : loginBgPhoneLight)
-		: (isDark ? loginBgDark : loginBgLight);
-
-	return {
-		background: `url(${bgUrl}) no-repeat center/cover`,
-		userSelect: 'none'
-	};
-});
 
 /**
  * 切换登录类型
