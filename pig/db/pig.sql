@@ -120,6 +120,35 @@ INSERT INTO `sys_dept` VALUES (14, '审计风控部', 17, 'admin', 'admin', '202
 COMMIT;
 
 -- ----------------------------
+-- Table structure for sys_device
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_device`;
+CREATE TABLE `sys_device` (
+  `device_id` bigint(20) NOT NULL COMMENT '设备ID',
+  `device_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '设备名称',
+  `device_serial_no` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '设备序列号',
+  `device_address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '设备地址',
+  `firmware_version` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '设备固件版本',
+  `online_status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '在离线状态 0：离线 1：在线',
+  `del_flag` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '是否删除 1：已删除 0：正常',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '创建人',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '更新人',
+  PRIMARY KEY (`device_id`) USING BTREE,
+  KEY `idx_device_serial_no` (`device_serial_no`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='设备信息表';
+
+-- ----------------------------
+-- Records of sys_device
+-- ----------------------------
+BEGIN;
+INSERT INTO `sys_device` VALUES (1850000000000000001, '门禁一体机-A', 'SN-A1001', '杭州仓 1 号门', 'v1.2.3', '1', '0', '2026-11-01 09:15:00', 'admin', '2026-11-01 09:15:00', 'admin');
+INSERT INTO `sys_device` VALUES (1850000000000000002, '温湿度传感器-B', 'SN-B2001', '杭州仓 3 号位', 'v2.0.0', '0', '0', '2026-11-02 10:20:00', 'admin', '2026-11-02 10:20:00', 'admin');
+INSERT INTO `sys_device` VALUES (1850000000000000003, '工业摄像头-C', 'SN-C3001', '上海仓 2 层', 'v1.0.8', '1', '0', '2026-11-05 14:35:00', 'admin', '2026-11-05 14:35:00', 'admin');
+COMMIT;
+
+-- ----------------------------
 -- Table structure for sys_dict
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_dict`;
@@ -410,6 +439,7 @@ INSERT INTO `sys_i18n` VALUES (72, 'router.bi', '数据报表', 'Bi Report', ' '
 INSERT INTO `sys_i18n` VALUES (73, 'router.message', '信息推送', 'Message Push', ' ', '2023-08-10 13:46:37', ' ', '2023-08-10 13:47:09', '0');
 INSERT INTO `sys_i18n` VALUES (74, 'router.sensitiveWords', '敏感词管理', 'Sensitive Words', ' ', '2023-08-10 13:46:37', ' ', '2023-08-10 13:47:09', '0');
 INSERT INTO `sys_i18n` VALUES (75, 'router.clarityMonitoring', '站点统计', 'Site Analytics', 'admin', '2026-03-26 00:00:00', 'admin', NULL, '0');
+INSERT INTO `sys_i18n` VALUES (76, 'router.deviceManagement', '设备管理', 'Devices', 'admin', '2026-11-13 00:00:00', 'admin', NULL, '0');
 COMMIT;
 
 -- ----------------------------
@@ -534,6 +564,11 @@ INSERT INTO `sys_menu` VALUES (2503, '密钥删除', 'sys_social_details_del', N
 INSERT INTO `sys_menu` VALUES (2504, '密钥查看', 'sys_social_details_view', NULL, NULL, 2500, '1', '1', 2, '0', NULL, '1', ' ', '2018-05-15 21:35:18', ' ', '2020-03-24 08:57:23', '0');
 INSERT INTO `sys_menu` VALUES (2600, '令牌管理', NULL, '/admin/token/index', NULL, 2000, 'iconfont icon-lingpai', '1', 11, '0', NULL, '0', '', '2018-09-04 05:58:41', 'admin', '2023-02-16 15:28:28', '0');
 INSERT INTO `sys_menu` VALUES (2601, '令牌删除', 'sys_token_del', NULL, NULL, 2600, NULL, '1', 1, '0', NULL, '1', ' ', '2018-09-04 05:59:50', ' ', '2020-03-24 08:57:24', '0');
+INSERT INTO `sys_menu` VALUES (2700, '设备管理', NULL, '/admin/device/index', NULL, 2000, 'iconfont icon-diannao1', '1', 13, '0', '0', '0', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2701, '设备查看', 'sys_device_view', NULL, NULL, 2700, NULL, '1', 0, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2702, '设备新增', 'sys_device_add', NULL, NULL, 2700, NULL, '1', 1, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2703, '设备修改', 'sys_device_edit', NULL, NULL, 2700, NULL, '1', 2, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2704, '设备删除', 'sys_device_del', NULL, NULL, 2700, NULL, '1', 3, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
 INSERT INTO `sys_menu` VALUES (2800, 'Quartz管理', NULL, '/tools/job-manage/index', NULL, 9910, 'iconfont icon-quartz', '1', 4, '0', NULL, '0', '', '2018-01-20 13:17:19', 'admin', '2023-11-27 14:52:53', '0');
 INSERT INTO `sys_menu` VALUES (2810, '任务新增', 'job_sys_job_add', NULL, NULL, 2800, '1', '1', 0, '0', NULL, '1', ' ', '2018-05-15 21:35:18', ' ', '2020-03-24 08:57:26', '0');
 INSERT INTO `sys_menu` VALUES (2820, '任务修改', 'job_sys_job_edit', NULL, NULL, 2800, '1', '1', 0, '0', NULL, '1', ' ', '2018-05-15 21:35:18', ' ', '2020-03-24 08:57:27', '0');
@@ -809,6 +844,11 @@ INSERT INTO `sys_role_menu` VALUES (1, 2503);
 INSERT INTO `sys_role_menu` VALUES (1, 2504);
 INSERT INTO `sys_role_menu` VALUES (1, 2600);
 INSERT INTO `sys_role_menu` VALUES (1, 2601);
+INSERT INTO `sys_role_menu` VALUES (1, 2700);
+INSERT INTO `sys_role_menu` VALUES (1, 2701);
+INSERT INTO `sys_role_menu` VALUES (1, 2702);
+INSERT INTO `sys_role_menu` VALUES (1, 2703);
+INSERT INTO `sys_role_menu` VALUES (1, 2704);
 INSERT INTO `sys_role_menu` VALUES (1, 2800);
 INSERT INTO `sys_role_menu` VALUES (1, 2810);
 INSERT INTO `sys_role_menu` VALUES (1, 2820);
