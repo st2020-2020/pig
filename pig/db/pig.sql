@@ -440,6 +440,7 @@ INSERT INTO `sys_i18n` VALUES (73, 'router.message', '信息推送', 'Message Pu
 INSERT INTO `sys_i18n` VALUES (74, 'router.sensitiveWords', '敏感词管理', 'Sensitive Words', ' ', '2023-08-10 13:46:37', ' ', '2023-08-10 13:47:09', '0');
 INSERT INTO `sys_i18n` VALUES (75, 'router.clarityMonitoring', '站点统计', 'Site Analytics', 'admin', '2026-03-26 00:00:00', 'admin', NULL, '0');
 INSERT INTO `sys_i18n` VALUES (76, 'router.deviceManagement', '设备管理', 'Devices', 'admin', '2026-11-13 00:00:00', 'admin', NULL, '0');
+INSERT INTO `sys_i18n` VALUES (77, 'router.noticeManagement', '系统公告', 'Notices', 'admin', '2026-11-15 00:00:00', 'admin', NULL, '0');
 COMMIT;
 
 -- ----------------------------
@@ -569,6 +570,11 @@ INSERT INTO `sys_menu` VALUES (2701, '设备查看', 'sys_device_view', NULL, NU
 INSERT INTO `sys_menu` VALUES (2702, '设备新增', 'sys_device_add', NULL, NULL, 2700, NULL, '1', 1, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
 INSERT INTO `sys_menu` VALUES (2703, '设备修改', 'sys_device_edit', NULL, NULL, 2700, NULL, '1', 2, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
 INSERT INTO `sys_menu` VALUES (2704, '设备删除', 'sys_device_del', NULL, NULL, 2700, NULL, '1', 3, '0', NULL, '1', 'admin', '2026-11-13 00:00:00', 'admin', '2026-11-13 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2750, '系统公告', NULL, '/admin/notice/index', NULL, 2000, 'iconfont icon-tongzhi4', '1', 14, '0', '0', '0', 'admin', '2026-11-15 00:00:00', 'admin', '2026-11-15 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2751, '系统公告查看', 'sys_notice_view', NULL, NULL, 2750, NULL, '1', 0, '0', NULL, '1', 'admin', '2026-11-15 00:00:00', 'admin', '2026-11-15 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2752, '系统公告新增', 'sys_notice_add', NULL, NULL, 2750, NULL, '1', 1, '0', NULL, '1', 'admin', '2026-11-15 00:00:00', 'admin', '2026-11-15 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2753, '系统公告修改', 'sys_notice_edit', NULL, NULL, 2750, NULL, '1', 2, '0', NULL, '1', 'admin', '2026-11-15 00:00:00', 'admin', '2026-11-15 00:00:00', '0');
+INSERT INTO `sys_menu` VALUES (2754, '系统公告删除', 'sys_notice_del', NULL, NULL, 2750, NULL, '1', 3, '0', NULL, '1', 'admin', '2026-11-15 00:00:00', 'admin', '2026-11-15 00:00:00', '0');
 INSERT INTO `sys_menu` VALUES (2800, 'Quartz管理', NULL, '/tools/job-manage/index', NULL, 9910, 'iconfont icon-quartz', '1', 4, '0', NULL, '0', '', '2018-01-20 13:17:19', 'admin', '2023-11-27 14:52:53', '0');
 INSERT INTO `sys_menu` VALUES (2810, '任务新增', 'job_sys_job_add', NULL, NULL, 2800, '1', '1', 0, '0', NULL, '1', ' ', '2018-05-15 21:35:18', ' ', '2020-03-24 08:57:26', '0');
 INSERT INTO `sys_menu` VALUES (2820, '任务修改', 'job_sys_job_edit', NULL, NULL, 2800, '1', '1', 0, '0', NULL, '1', ' ', '2018-05-15 21:35:18', ' ', '2020-03-24 08:57:27', '0');
@@ -849,6 +855,11 @@ INSERT INTO `sys_role_menu` VALUES (1, 2701);
 INSERT INTO `sys_role_menu` VALUES (1, 2702);
 INSERT INTO `sys_role_menu` VALUES (1, 2703);
 INSERT INTO `sys_role_menu` VALUES (1, 2704);
+INSERT INTO `sys_role_menu` VALUES (1, 2750);
+INSERT INTO `sys_role_menu` VALUES (1, 2751);
+INSERT INTO `sys_role_menu` VALUES (1, 2752);
+INSERT INTO `sys_role_menu` VALUES (1, 2753);
+INSERT INTO `sys_role_menu` VALUES (1, 2754);
 INSERT INTO `sys_role_menu` VALUES (1, 2800);
 INSERT INTO `sys_role_menu` VALUES (1, 2810);
 INSERT INTO `sys_role_menu` VALUES (1, 2820);
@@ -1137,6 +1148,25 @@ CREATE TABLE `sys_message_relation` (
   `del_flag` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '删除时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='系统消息推送记录';
+
+-- ----------------------------
+-- Table structure for sys_notice
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_notice`;
+CREATE TABLE `sys_notice` (
+  `notice_id` bigint(20) NOT NULL COMMENT '公告ID',
+  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '公告标题',
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '公告正文',
+  `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '状态 0：草稿 1：已发布 2：已下线',
+  `publish_time` datetime DEFAULT NULL COMMENT '发布时间',
+  `del_flag` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '是否删除 1：已删除 0：正常',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '创建人',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '' COMMENT '更新人',
+  PRIMARY KEY (`notice_id`) USING BTREE,
+  KEY `idx_status_publish` (`status`, `publish_time` DESC) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='系统公告表';
 
 DROP TABLE IF EXISTS `sys_system_config`;
 CREATE TABLE `sys_system_config` (
