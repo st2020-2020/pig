@@ -38,6 +38,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -57,6 +58,18 @@ import java.util.TreeMap;
  */
 @Service
 public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> implements SysLogService {
+
+	/**
+	 * pig-auth 登录成功日志的标题，见
+	 * PigAuthenticationSuccessEventHandler#sendSuccessEventLog
+	 */
+	private static final String LOGIN_SUCCESS_TITLE = "登录成功";
+
+	/**
+	 * pig-auth 登录失败日志的标题，见
+	 * PigAuthenticationFailureEventHandler#sendFailureEventLog
+	 */
+	private static final String LOGIN_FAILURE_TITLE = "登录失败";
 
 	/**
 	 * 批量插入前端错误日志
@@ -97,6 +110,28 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
 		}
 
 		wrapper.eq(StrUtil.isNotBlank(sysLog.getServiceId()), SysLog::getServiceId, sysLog.getServiceId());
+		return baseMapper.selectPage(page, wrapper);
+	}
+
+	/**
+	 * 分页查询某个用户自己的登录记录，按登录时间倒序
+	 * @param page 分页对象
+	 * @param username 归属用户名，只按它过滤
+	 * @param startDate 开始日期（含）
+	 * @param endDate 结束日期（含）
+	 * @return 登录日志分页结果
+	 */
+	@Override
+	public Page getLoginLogPage(Page page, String username, LocalDate startDate, LocalDate endDate) {
+		// createBy 是唯一归属条件；标题过滤排除 @SysLog 写入的普通操作日志，
+		// 否则会在「登录记录」里混进业务操作
+		LambdaQueryWrapper<SysLog> wrapper = Wrappers.<SysLog>lambdaQuery()
+			.eq(SysLog::getCreateBy, username)
+			.in(SysLog::getTitle, LOGIN_SUCCESS_TITLE, LOGIN_FAILURE_TITLE)
+			.ge(SysLog::getCreateTime, startDate.atStartOfDay())
+			.le(SysLog::getCreateTime, endDate.atTime(23, 59, 59))
+			.orderByDesc(SysLog::getCreateTime)
+			.orderByDesc(SysLog::getId);
 		return baseMapper.selectPage(page, wrapper);
 	}
 

@@ -25,6 +25,7 @@ import com.pig4cloud.pig.admin.api.dto.SysLogDTO;
 import com.pig4cloud.pig.admin.api.entity.SysLog;
 import com.pig4cloud.pig.admin.api.vo.PreLogVO;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +53,16 @@ public interface SysLogService extends IService<SysLog> {
 	 * @return
 	 */
 	Page getLogByPage(Page page, SysLogDTO sysLog);
+
+	/**
+	 * 分页查询某个用户自己的登录记录，按登录时间倒序
+	 * @param page 分页对象
+	 * @param username 归属用户名，只按它过滤
+	 * @param startDate 开始日期（含）
+	 * @param endDate 结束日期（含）
+	 * @return 登录日志分页结果
+	 */
+	Page getLoginLogPage(Page page, String username, LocalDate startDate, LocalDate endDate);
 
 	/**
 	 * 插入日志
