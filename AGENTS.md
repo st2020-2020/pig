@@ -35,7 +35,7 @@ cd pig-ui
 npm install      # 用 npm；pnpm-lock 未入库
 npm run dev      # :8888，/api 代理到 127.0.0.1:9999
 npm run build    # → dist/
-npm run test     # vitest 全量，现有 7 个 *.spec.ts；本机直接跑失败，见「本机环境」
+npm run test     # vitest 全量，现有 8 个 *.spec.ts；本机直接跑失败，见「本机环境」
 ```
 
 常改：登录页 `pig-ui/src/views/login/index.vue` 与 `pig-ui/src/theme/login.scss`；主题覆盖 `pig-ui/src/theme/element.scss`；站点配置页 `pig-ui/src/views/admin/siteconfig/index.vue`；store 与兜底值 `pig-ui/src/stores/siteConfig.ts`。
@@ -59,15 +59,21 @@ npm run test     # vitest 全量，现有 7 个 *.spec.ts；本机直接跑失�
 10. **直插 SQL 种菜单要清缓存**。菜单/角色/用户走 Redis（键 gl:menu_details、role_details、gl:user_details），直接 INSERT `sys_menu`/`sys_role_menu` 后不清，登录会 403 或看不到菜单。
 11. **新增表要给两份脚本**。`pig/db/pig.sql` 是重建用（含 DROP），线上另给可重复执行的升级脚本（见 `pig/db/sys_device_upgrade.sql`、`pig/db/sys_notice_upgrade.sql`：CREATE TABLE IF NOT EXISTS + ON DUPLICATE KEY UPDATE），别拿 `pig/db/pig.sql` 刷线上库。
 12. **GET 参数会被请求加密层逐个 toString()**。数组会变成 a,b 绑不上后端类型，日期范围这类要在 api 封装层拆成两个标量参数。
+13. **没有可访问菜单的角色登录后首页白屏**。`initBackEndControlRoutes` 在菜单接口返回空数组时直接 return（`pig-ui/src/router/backEnd.ts:46`），`/home` 在 `dynamicRoutes` 里也跟着没注册，首页渲染不出来。给普通角色备验证账号时至少授一个菜单。
 
 ## 本机环境
 
-JDK 11（编译不了）、Node 24、**无 Maven / pnpm / Docker**。本机可改代码、跑 eslint 与 vitest；`npm run test` 直接跑会因沙箱 spawn EPERM 失败，需 `--pool=threads --configLoader native` 加一份临时精简 config（只跑 `pig-ui/src/**/*.spec.ts`），跑完删掉。后端构建与部署在服务器上做。
+JDK 11（编译不了）、Node 24、**无 Maven / pnpm / Docker**。本机可改代码、跑 eslint 与 vitest；`npm run build` 与 `npm run test` 直接跑都会失败：esbuild 和 vitest 默认的 forks 池在沙箱下起不了子进程（spawn EPERM），属沙箱限制不是代码问题。后端构建与部署在服务器上做。
+跑 vitest 要先在 `pig-ui/` 里 `pnpm install --node-linker=hoisted`（默认 junction 布局下 `@vitest/utils` 解析失败），再加 `--pool=threads --configLoader native` 配一份临时精简 config（`include: ['src/**/*.spec.ts']`、`environment: 'node'`；默认加载器 bundle `vite.config.mts` 时也会 spawn EPERM），跑完删掉别提交。
+那份临时 config 存成 `.mts` 时没有 `__dirname`，别名要用 `new URL('./src/', import.meta.url).pathname` 并去掉 Windows 前导斜杠。
+本机无 Maven 与 `.m2`，改 Java 只能用 `javac -proc:none` 看语法，且必须加 `-encoding UTF-8`——javac 默认按 GBK 读源文件，带中文注释会报一堆「不可映射字符」假错误；真实编译与测试换环境做。
+写含中文或非 ASCII 的源文件别用 PowerShell `Get-Content`/`Set-Content`，会破编码；用 node 读写 utf8。
+`pig-ui/src/auto-imports.d.ts` 每次跑 vite/vitest 都会被重写成不同的相对路径，属噪音，提交前 `git checkout` 还原。prettier 只对新增文件跑 `--write`，整体跑会顺带改无关文件。
 
 ## 功能索引
 
 每个功能一行，细节在各档案里；档案目录 `docs/agent-context/features/`。改这块之前先读档案的「已知限制」。
 - 登录页背景与布局 — 一张 backgroud.png、桌面端卡片右移避插画与二维码 — `docs/agent-context/features/登录页背景与布局.md`
 - 设备管理 — 系统管理下的设备增删改查页与 `/device` 接口 — `docs/agent-context/features/设备管理.md`
-- 系统公告 — 公告管理页、首页公告条与 `/notice` 接口 — `docs/agent-context/features/系统公告.md`
+- 系统公告 — 公告管理页、首页公告条与历史公告抽屉、`/notice` 接口 — `docs/agent-context/features/系统公告.md`
 - 我的登录记录 — 个人中心第 5 个标签与 `/login-log/page` 只读接口 — `docs/agent-context/features/我的登录记录.md`
