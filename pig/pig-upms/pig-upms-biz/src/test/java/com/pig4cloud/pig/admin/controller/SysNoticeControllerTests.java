@@ -5,16 +5,21 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pig4cloud.pig.admin.api.entity.SysNotice;
+import com.pig4cloud.pig.admin.api.vo.NoticeHistoryVO;
 import com.pig4cloud.pig.admin.service.SysNoticeService;
+import com.pig4cloud.pig.common.core.jackson.PigJavaTimeModule;
 import com.pig4cloud.pig.common.core.util.R;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,15 +83,81 @@ class SysNoticeControllerTests {
 	}
 
 	@Test
-	void historyPageForwardsServiceResult() {
+	void historyPageReturnsOnlyFourFields() throws Exception {
 		SysNoticeService service = mock(SysNoticeService.class);
-		Page<SysNotice> result = new Page<>(1, 10);
-		when(service.pageHistory(any(Page.class))).thenReturn(result);
+		SysNotice notice = new SysNotice();
+		// 库里这行数据其实带着全部审计字段，接口不能把它们下发给普通登录用户
+		notice.setNoticeId(1900000000000000001L);
+		notice.setTitle("系统升级通知");
+		notice.setContent("第一行\n第二行");
+		notice.setStatus("1");
+		notice.setPublishTime(LocalDateTime.of(2026, 11, 15, 10, 0));
+		notice.setCreateBy("admin");
+		notice.setCreateTime(LocalDateTime.of(2026, 11, 1, 9, 0));
+		notice.setUpdateBy("admin");
+		notice.setUpdateTime(LocalDateTime.of(2026, 11, 2, 9, 0));
+		notice.setDelFlag("0");
+		Page<SysNotice> noticePage = new Page<>(1, 10, 1);
+		noticePage.setRecords(List.of(notice));
+		when(service.pageHistory(any(Page.class))).thenReturn(noticePage);
 
 		R response = new SysNoticeController(service).getHistoryNoticePage(new Page<>(1, 10));
 
 		assertThat(response.isOk()).isTrue();
-		assertThat(response.getData()).isSameAs(result);
+		// 用工程自己的时间模块序列化，顺便固定 yyyy-MM-dd HH:mm:ss 口径
+		String json = new ObjectMapper().registerModule(new PigJavaTimeModule()).writeValueAsString(response.getData());
+		assertThat(json).contains("\"title\":\"系统升级通知\"")
+			.contains("\"content\"")
+			.contains("\"publishTime\":\"2026-11-15 10:00:00\"")
+			.contains("\"status\":\"1\"");
+		// 约定 C1：只回四个字段，noticeId 与审计字段一律不下发
+		assertThat(json).doesNotContain("noticeId")
+			.doesNotContain("createBy")
+			.doesNotContain("createTime")
+			.doesNotContain("updateBy")
+			.doesNotContain("updateTime")
+			.doesNotContain("delFlag");
+	}
+
+	@Test
+	void historyVODeclaresExactlyFourFields() {
+		// 展示对象自己一个字段都不能多，多一个就会跟着响应对外扩散
+		assertThat(NoticeHistoryVO.class.getDeclaredFields()).extracting(Field::getName)
+			.containsExactlyInAnyOrder("title", "content", "publishTime", "status");
+	}
+
+	@Test
+	void historyPageKeepsPagingMeta() {
+		SysNoticeService service = mock(SysNoticeService.class);
+		Page<SysNotice> noticePage = new Page<>(2, 10, 23);
+		noticePage.setRecords(List.of());
+		when(service.pageHistory(any(Page.class))).thenReturn(noticePage);
+
+		R response = new SysNoticeController(service).getHistoryNoticePage(new Page<>(2, 10));
+
+		assertThat(response.isOk()).isTrue();
+		@SuppressWarnings("unchecked")
+		Page<NoticeHistoryVO> voPage = (Page<NoticeHistoryVO>) response.getData();
+		assertThat(voPage.getTotal()).isEqualTo(23);
+		assertThat(voPage.getCurrent()).isEqualTo(2);
+		assertThat(voPage.getSize()).isEqualTo(10);
+		assertThat(voPage.getPages()).isEqualTo(3);
+		// 约定 C1：records 未命中时是 [] 而不是 null
+		assertThat(voPage.getRecords()).isNotNull().isEmpty();
+	}
+
+	@Test
+	void historyPageTurnsNullRecordsIntoEmptyList() {
+		SysNoticeService service = mock(SysNoticeService.class);
+		Page<SysNotice> noticePage = new Page<>(1, 10, 0);
+		noticePage.setRecords(null);
+		when(service.pageHistory(any(Page.class))).thenReturn(noticePage);
+
+		R response = new SysNoticeController(service).getHistoryNoticePage(new Page<>(1, 10));
+
+		@SuppressWarnings("unchecked")
+		Page<NoticeHistoryVO> voPage = (Page<NoticeHistoryVO>) response.getData();
+		assertThat(voPage.getRecords()).isNotNull().isEmpty();
 	}
 
 	@Test

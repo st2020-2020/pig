@@ -25,6 +25,7 @@ import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pig4cloud.pig.admin.api.entity.SysNotice;
+import com.pig4cloud.pig.admin.api.vo.NoticeHistoryVO;
 import com.pig4cloud.pig.admin.service.SysNoticeService;
 import com.pig4cloud.pig.common.core.util.R;
 import com.pig4cloud.pig.common.log.annotation.SysLog;
@@ -37,6 +38,8 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 系统公告表
@@ -74,7 +77,33 @@ public class SysNoticeController {
 		// 只继承页码与页大小：请求里的 descs/ascs 已被 SqlFilterArgumentResolver 塞进 page 的排序，
 		// 历史公告排序固定，不跟随请求（写法照 SysLoginLogController#getLoginLogPage）
 		Page<SysNotice> queryPage = new Page<>(page.getCurrent(), page.getSize());
-		return R.ok(sysNoticeService.pageHistory(queryPage));
+		return R.ok(toHistoryVOPage(sysNoticeService.pageHistory(queryPage)));
+	}
+
+	/**
+	 * 历史公告分页结果转展示对象：只保留页面用得上的四个字段，创建人/修改人/时间/删除标记一律不下发
+	 * @param noticePage 公告分页结果
+	 * @return 历史公告分页结果
+	 */
+	private Page<NoticeHistoryVO> toHistoryVOPage(Page<SysNotice> noticePage) {
+		Page<NoticeHistoryVO> voPage = new Page<>(noticePage.getCurrent(), noticePage.getSize(), noticePage.getTotal());
+		List<SysNotice> records = noticePage.getRecords();
+		voPage.setRecords(records == null ? List.of() : records.stream().map(this::toHistoryVO).toList());
+		return voPage;
+	}
+
+	/**
+	 * 公告转历史公告展示对象
+	 * @param notice 公告
+	 * @return 历史公告
+	 */
+	private NoticeHistoryVO toHistoryVO(SysNotice notice) {
+		NoticeHistoryVO vo = new NoticeHistoryVO();
+		vo.setTitle(notice.getTitle());
+		vo.setContent(notice.getContent());
+		vo.setPublishTime(notice.getPublishTime());
+		vo.setStatus(notice.getStatus());
+		return vo;
 	}
 
 	/**
