@@ -26,7 +26,7 @@ mvn -pl pig-upms/pig-upms-biz -am test -DskipTests=false  # 单模块，-am 不�
 java -jar pig-boot/target/pig-boot.jar --file.local.base-path=/app/upload
 ```
 
-常改：站点配置读写 `pig-upms/pig-upms-biz/.../service/impl/SysSiteConfigServiceImpl.java`；运行参数 `pig-boot/src/main/resources/application{,-dev}.yml`；种子与 `SITE_*` 参数 `db/pig.sql`；登录/验证码 `pig-auth/.../support/`。
+常改：站点配置 `pig/pig-upms/pig-upms-biz/src/main/java/com/pig4cloud/pig/admin/service/impl/`（SysSiteConfigServiceImpl）；运行参数 `pig/pig-boot/src/main/resources/application.yml`；种子与 `SITE_*` 参数 `pig/db/pig.sql`；登录与验证码 `pig/pig-auth/src/main/java/com/pig4cloud/pig/auth/support`。
 
 ## 前端 `pig-ui/`
 
@@ -35,27 +35,39 @@ cd pig-ui
 npm install      # 用 npm；pnpm-lock 未入库
 npm run dev      # :8888，/api 代理到 127.0.0.1:9999
 npm run build    # → dist/
-npm run test     # vitest，现有 siteConfig.spec.ts / login.spec.ts
+npm run test     # vitest 全量，现有 7 个 *.spec.ts；本机直接跑失败，见「本机环境」
 ```
 
-常改：登录页 `src/theme/login.scss`；主题覆盖 `src/theme/element.scss`；站点配置页 `src/views/admin/siteconfig/index.vue`；store 与兜底值 `src/stores/siteConfig.ts`；接口 `src/api/admin/system.ts`；请求拦截 `src/utils/request.ts`；路由 `src/router/backEnd.ts`。
+常改：登录页 `pig-ui/src/views/login/index.vue` 与 `pig-ui/src/theme/login.scss`；主题覆盖 `pig-ui/src/theme/element.scss`；站点配置页 `pig-ui/src/views/admin/siteconfig/index.vue`；store 与兜底值 `pig-ui/src/stores/siteConfig.ts`。
+常改续：接口封装 `pig-ui/src/api/admin/`；请求拦截 `pig-ui/src/utils/request.ts`；菜单转路由 `pig-ui/src/router/backEnd.ts`。
 
 ## 部署 `server-deploy/`
 
-`docker-compose.yml`（mysql + redis + pig-boot + nginx，对外只开 85）、`pig-ui.conf`（静态站 + `/api/` 反代，actuator/druid/swagger 一律 403）、`env.server-actual`（服务器上 `.env` 实际值）。
+`server-deploy/docker-compose.yml`（mysql + redis + pig-boot + nginx，对外只开 85）、`server-deploy/pig-ui.conf`（静态站，接口前缀反代到 pig-boot，actuator/druid/swagger 一律 403）、`server-deploy/env.server-actual`（服务器上 .env 实际值）。
 
 ## 约定与坑
 
-1. **`VITE_IS_MICRO` 必须 `false`**。仓库里 `.env` 是上游原值 `true`，服务器是 `false`。`true` 会请求 `/auth/code/image`，单体版是 `/admin/code/image` —— 验证码必坏、登录必失败。重建前端别覆盖回去。
+1. **`VITE_IS_MICRO` 必须 `false`**。仓库里 .env 是上游原值 `true`，服务器是 `false`。`true` 时验证码走 auth 前缀，单体版只有 admin 前缀 —— 验证码必坏、登录必失败。重建前端别覆盖回去。
 2. **覆盖 Element Plus 样式要 `!important`**。`element.scss` 的 `.el-button--primary` 规则特异度 0,5,0，普通声明压不过。
 3. **`title: null` 要回落**。`SITE_TITLE` 参数行缺失时后端下发 null，`setSiteConfig` 的兜底别删。
 4. **后端测试默认被跳过**：`pom.xml` 顶层 `<skipTests>true</skipTests>`，必须 `-DskipTests=false`。
-5. **路由由后端菜单驱动**。新增页面除了加 `.vue`，还得在 `sys_menu` 加记录，路径形如 `/admin/system/user/index`。
-6. **`.gitignore` 别裸写 `upload`**。Windows 大小写不敏感，会误伤 `pig-ui/src/components/Upload/`，根规则用的是 `/pig/upload`。
+5. **路由由后端菜单驱动**。新增页面除了加 .vue，还得在 `sys_menu` 加记录，`path` 与该页在 `pig-ui/src/views/` 下的目录对应，种子见 `pig/db/pig.sql`。
+6. **`.gitignore` 别裸写 upload**。Windows 大小写不敏感，会误伤 `pig-ui/src/components/Upload/`，根规则给运行期上传目录加了 pig/ 前缀限定。
 7. **Windows 检出的 mode 变化是噪音**（100755→100644，diff 为 0 行）。用 `git config core.fileMode false` 关掉。
 8. **提交风格** `type(scope): summary`；Java 格式 `mvn spring-javaformat:apply`。
 9. **别碰宿主机 `adp_*` 容器**（另一套业务，占 81/82/18090/18091）。pig 边界：85 端口、`pig-net`、`pig-*` 容器名、`/opt/pig*`。
+10. **直插 SQL 种菜单要清缓存**。菜单/角色/用户走 Redis（键 gl:menu_details、role_details、gl:user_details），直接 INSERT `sys_menu`/`sys_role_menu` 后不清，登录会 403 或看不到菜单。
+11. **新增表要给两份脚本**。`pig/db/pig.sql` 是重建用（含 DROP），线上另给可重复执行的升级脚本（见 `pig/db/sys_device_upgrade.sql`、`pig/db/sys_notice_upgrade.sql`：CREATE TABLE IF NOT EXISTS + ON DUPLICATE KEY UPDATE），别拿 `pig/db/pig.sql` 刷线上库。
+12. **GET 参数会被请求加密层逐个 toString()**。数组会变成 a,b 绑不上后端类型，日期范围这类要在 api 封装层拆成两个标量参数。
 
 ## 本机环境
 
-JDK 11（编译不了）、Node 24、**无 Maven / pnpm / Docker**。本机只能改代码和跑前端 vitest，后端构建与部署在服务器上做。
+JDK 11（编译不了）、Node 24、**无 Maven / pnpm / Docker**。本机可改代码、跑 eslint 与 vitest；`npm run test` 直接跑会因沙箱 spawn EPERM 失败，需 `--pool=threads --configLoader native` 加一份临时精简 config（只跑 `pig-ui/src/**/*.spec.ts`），跑完删掉。后端构建与部署在服务器上做。
+
+## 功能索引
+
+每个功能一行，细节在各档案里；档案目录 `docs/agent-context/features/`。改这块之前先读档案的「已知限制」。
+- 登录页背景与布局 — 一张 backgroud.png、桌面端卡片右移避插画与二维码 — `docs/agent-context/features/登录页背景与布局.md`
+- 设备管理 — 系统管理下的设备增删改查页与 `/device` 接口 — `docs/agent-context/features/设备管理.md`
+- 系统公告 — 公告管理页、首页公告条与 `/notice` 接口 — `docs/agent-context/features/系统公告.md`
+- 我的登录记录 — 个人中心第 5 个标签与 `/login-log/page` 只读接口 — `docs/agent-context/features/我的登录记录.md`
