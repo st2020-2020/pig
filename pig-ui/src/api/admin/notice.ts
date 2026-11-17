@@ -46,3 +46,12 @@ export function fetchLatest() {
 		method: 'get',
 	});
 }
+
+/** 历史公告分页，首页「历史公告」入口使用，登录即可访问 */
+export function fetchHistoryPage(params?: Object) {
+	return request({
+		url: '/admin/notice/history/page',
+		method: 'get',
+		params,
+	});
+}

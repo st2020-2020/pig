@@ -64,6 +64,20 @@ public class SysNoticeController {
 	}
 
 	/**
+	 * 分页查询历史公告，首页「历史公告」入口使用。任何登录用户可读，不要求后台菜单或按钮权限
+	 * @param page 分页对象
+	 * @return 已发布与已下线公告的分页结果，按发布时间倒序
+	 */
+	@Operation(description = "分页查询历史公告", summary = "分页查询历史公告")
+	@GetMapping("/history/page")
+	public R getHistoryNoticePage(@ParameterObject Page page) {
+		// 只继承页码与页大小：请求里的 descs/ascs 已被 SqlFilterArgumentResolver 塞进 page 的排序，
+		// 历史公告排序固定，不跟随请求（写法照 SysLoginLogController#getLoginLogPage）
+		Page<SysNotice> queryPage = new Page<>(page.getCurrent(), page.getSize());
+		return R.ok(sysNoticeService.pageHistory(queryPage));
+	}
+
+	/**
 	 * 分页查询
 	 * @param page 分页对象
 	 * @param sysNotice 系统公告

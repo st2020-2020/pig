@@ -2,7 +2,9 @@ package com.pig4cloud.pig.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pig4cloud.pig.admin.api.entity.SysNotice;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.junit.jupiter.api.BeforeEach;
@@ -210,6 +212,31 @@ class SysNoticeServiceImplTests {
 		assertThat(service.getLatest()).isNull();
 	}
 
+	@Test
+	void historyWrapperFiltersPublishedAndOffline() {
+		Wrapper<SysNotice> condition = SysNoticeServiceImpl.historyWrapper();
+
+		// 只要已发布(1)与已下线(2)，草稿(0)一律不返回
+		assertThat(condition.getParamNameValuePairs().values()).extracting(value -> String.valueOf(value))
+			.contains("1", "2")
+			.doesNotContain("0");
+		// 按发布时间倒序、主键倒序，同一时刻结果也稳定
+		assertThat(condition.getSqlSegment()).contains("status")
+			.contains("publish_time")
+			.contains("notice_id")
+			.contains("DESC");
+	}
+
+	@Test
+	void pageHistoryQueriesWithFixedWrapper() {
+		StubService service = new StubService();
+		Page<SysNotice> page = new Page<>(2, 20);
+
+		assertThat(service.pageHistory(page)).isSameAs(page);
+		assertThat(service.historyQuery).isNotNull();
+		assertThat(service.historyQuery.getSqlSegment()).contains("status", "publish_time", "notice_id");
+	}
+
 	private static SysNotice request(String status) {
 		SysNotice notice = new SysNotice();
 		notice.setNoticeId(NOTICE_ID);
@@ -243,6 +270,14 @@ class SysNoticeServiceImplTests {
 		private SysNotice latest;
 
 		private Wrapper<SysNotice> latestQuery;
+
+		private Wrapper<SysNotice> historyQuery;
+
+		@Override
+		public <E extends IPage<SysNotice>> E page(E page, Wrapper<SysNotice> queryWrapper) {
+			historyQuery = queryWrapper;
+			return page;
+		}
 
 		@Override
 		public SysNotice getOne(Wrapper<SysNotice> queryWrapper) {

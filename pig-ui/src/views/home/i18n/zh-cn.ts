@@ -18,6 +18,10 @@ export default {
 		newsTime: '时间',
 		announcement: '公告通知',
 		thanksForReading: '感谢您的阅读',
+		historyNotice: '历史公告',
+		historyNoticeEmpty: '暂无历史公告',
+		historyNoticeFetchError: '获取历史公告失败',
+		historyNoticePublishTime: '发布时间',
 		widgets: {
 			done: '完成',
 			customize: '自定义',

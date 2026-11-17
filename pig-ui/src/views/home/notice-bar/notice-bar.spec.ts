@@ -42,12 +42,21 @@ describe('首页公告条（约定 C1 / AC12）', () => {
 		expect(noticeBar).toContain('Local.get(closedKey(data.noticeId))');
 	});
 
-	it('接口返回 null 或失败时不渲染、不弹错误提示', () => {
-		// 单一根节点 v-if，未拿到对象时没有任何 DOM
-		expect(noticeBar).toContain('<div v-if="notice"');
+	it('接口返回 null 或失败时不渲染公告条内容、不弹错误提示', () => {
+		// 公告条内容与极简入口行共用一个根节点，没有公告时只留入口行
+		expect(noticeBar).toContain('v-if="notice || loaded"');
 		expect(noticeBar).toContain('if (!data || !data.noticeId ||');
 		// 出错静默，不能 import useMessage 去弹 error
 		expect(noticeBar).not.toContain('useMessage');
 		expect(noticeBar).not.toContain('.error(');
+	});
+
+	it('公告条上常驻「历史公告」入口，位于关闭按钮左侧', () => {
+		const entryAt = noticeBar.indexOf(`t('home.historyNotice')`);
+		const closeAt = noticeBar.indexOf('handleClose');
+		expect(entryAt).toBeGreaterThan(-1);
+		expect(closeAt).toBeGreaterThan(entryAt);
+		// 极简入口行：没有公告可显示时也保留入口
+		expect(noticeBar).toMatch(/<div v-else class="flex justify-end[\s\S]*home\.historyNotice/);
 	});
 });

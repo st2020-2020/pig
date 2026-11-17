@@ -18,6 +18,10 @@ export default {
 		newsTime: 'Time',
 		announcement: 'Announcement',
 		thanksForReading: 'Thank you for reading',
+		historyNotice: 'Notice history',
+		historyNoticeEmpty: 'No notice history',
+		historyNoticeFetchError: 'Failed to load notice history',
+		historyNoticePublishTime: 'Publish time',
 		widgets: {
 			done: 'Done',
 			customize: 'Customize',

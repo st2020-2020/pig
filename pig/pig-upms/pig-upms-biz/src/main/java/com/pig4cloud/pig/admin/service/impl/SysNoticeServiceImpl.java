@@ -19,6 +19,7 @@ package com.pig4cloud.pig.admin.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.pig4cloud.pig.admin.api.entity.SysNotice;
 import com.pig4cloud.pig.admin.mapper.SysNoticeMapper;
@@ -46,6 +47,11 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
 	 */
 	static final String STATUS_DRAFT = "0";
 
+	/**
+	 * 已下线状态
+	 */
+	static final String STATUS_OFFLINE = "2";
+
 	@Override
 	public SysNotice getLatest() {
 		return getOne(latestWrapper());
@@ -62,6 +68,25 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
 			.orderByDesc(SysNotice::getPublishTime)
 			.orderByDesc(SysNotice::getNoticeId)
 			.last("LIMIT 1");
+	}
+
+	@Override
+	public Page<SysNotice> pageHistory(Page<SysNotice> page) {
+		// 用 this.page 明确调用 IService 的默认实现，别被同名参数 page 干扰阅读
+		return this.page(page, historyWrapper());
+	}
+
+	/**
+	 * 历史公告的查询条件：当前状态是已发布或已下线，按发布时间倒序、主键倒序。草稿（含曾发布后改回草稿的）
+	 * 不返回；@TableLogic 自动追加 del_flag='0'。MySQL 的 ORDER BY publish_time DESC 把 NULL 排在最后，
+	 * 正好满足「发布时间为空显示 — 且排在末尾」，同一时刻用 notice_id 倒序兜住顺序稳定
+	 * @return 查询条件构造器
+	 */
+	static LambdaQueryWrapper<SysNotice> historyWrapper() {
+		return Wrappers.<SysNotice>lambdaQuery()
+			.in(SysNotice::getStatus, STATUS_PUBLISHED, STATUS_OFFLINE)
+			.orderByDesc(SysNotice::getPublishTime)
+			.orderByDesc(SysNotice::getNoticeId);
 	}
 
 	@Override

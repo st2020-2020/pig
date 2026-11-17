@@ -61,6 +61,35 @@ class SysNoticeControllerTests {
 	}
 
 	@Test
+	void historyPageKeepsOnlyPageNumberAndSize() {
+		SysNoticeService service = mock(SysNoticeService.class);
+		Page<SysNotice> page = new Page<>(2, 20);
+		// 请求里带来的排序（由 SqlFilterArgumentResolver 塞进 Page）不能传到历史公告查询
+		page.addOrder(OrderItem.asc("title"));
+
+		new SysNoticeController(service).getHistoryNoticePage(page);
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<Page<SysNotice>> queryPage = ArgumentCaptor.forClass(Page.class);
+		verify(service).pageHistory(queryPage.capture());
+		assertThat(queryPage.getValue().orders()).isEmpty();
+		assertThat(queryPage.getValue().getCurrent()).isEqualTo(2);
+		assertThat(queryPage.getValue().getSize()).isEqualTo(20);
+	}
+
+	@Test
+	void historyPageForwardsServiceResult() {
+		SysNoticeService service = mock(SysNoticeService.class);
+		Page<SysNotice> result = new Page<>(1, 10);
+		when(service.pageHistory(any(Page.class))).thenReturn(result);
+
+		R response = new SysNoticeController(service).getHistoryNoticePage(new Page<>(1, 10));
+
+		assertThat(response.isOk()).isTrue();
+		assertThat(response.getData()).isSameAs(result);
+	}
+
+	@Test
 	void emptyOrdersFallBackToCreateTimeDesc() {
 		Page<SysNotice> page = new Page<>(1, 10);
 

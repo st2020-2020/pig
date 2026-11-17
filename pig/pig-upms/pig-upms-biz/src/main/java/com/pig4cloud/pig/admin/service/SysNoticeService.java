@@ -17,6 +17,7 @@
 
 package com.pig4cloud.pig.admin.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
 import com.pig4cloud.pig.admin.api.entity.SysNotice;
 
@@ -33,6 +34,14 @@ public interface SysNoticeService extends IService<SysNotice> {
 	 * @return 最新一条已发布公告，没有时返回 null
 	 */
 	SysNotice getLatest();
+
+	/**
+	 * 分页查询历史公告：已发布与已下线（不含草稿、不含已逻辑删除）的只读视图，排序固定为发布时间倒序，
+	 * 不接受任何筛选条件
+	 * @param page 分页对象
+	 * @return 历史公告分页结果
+	 */
+	Page<SysNotice> pageHistory(Page<SysNotice> page);
 
 	/**
 	 * 新增公告：状态缺省为草稿，发布时间一律由服务端决定
