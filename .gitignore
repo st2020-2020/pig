@@ -98,6 +98,7 @@ Servers
 # ---------- 工具/规划目录 ----------
 .claude
 .superpowers
-docs
+docs/*
+!docs/agent-context/
 docs/plans/
 **/*-aitest*
