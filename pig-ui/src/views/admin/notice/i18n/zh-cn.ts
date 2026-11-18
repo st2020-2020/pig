@@ -7,6 +7,7 @@ export default {
 		publishTime: '发布时间',
 		createTime: '添加时间',
 		createBy: '发布人',
+		updateBy: '最后修改人',
 		draft: '草稿',
 		published: '已发布',
 		offline: '已下线',

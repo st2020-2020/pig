@@ -68,6 +68,9 @@
 				<el-table-column :label="t('notice.createBy')" prop="createBy" min-width="120" show-overflow-tooltip>
 					<template #default="scope">{{ scope.row.createBy || '—' }}</template>
 				</el-table-column>
+				<el-table-column :label="t('notice.updateBy')" prop="updateBy" min-width="120" show-overflow-tooltip>
+					<template #default="scope">{{ scope.row.updateBy || '—' }}</template>
+				</el-table-column>
 				<el-table-column :label="$t('common.action')" width="200">
 					<template #default="scope">
 						<el-button icon="edit-pen" @click="formDialogRef.openDialog(scope.row.noticeId)" text type="primary" v-auth="'sys_notice_edit'"

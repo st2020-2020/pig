@@ -7,6 +7,7 @@ export default {
 		publishTime: 'Publish Time',
 		createTime: 'Added Time',
 		createBy: 'Publisher',
+		updateBy: 'Last Modified By',
 		draft: 'Draft',
 		published: 'Published',
 		offline: 'Offline',
