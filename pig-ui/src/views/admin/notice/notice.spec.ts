@@ -30,11 +30,21 @@ describe('系统公告管理页（约定 C2~C6）', () => {
 		expect(noticeApi).toContain('export function fetchLatest()');
 	});
 
-	it('表格列出五个公告字段', () => {
-		const fields = ['title', 'content', 'status', 'publishTime', 'createTime'];
+	it('表格列出六个公告字段', () => {
+		const fields = ['title', 'content', 'status', 'publishTime', 'createTime', 'createBy'];
 		for (const field of fields) {
 			expect(noticePage, `缺少 ${field} 列`).toContain(`prop="${field}"`);
 		}
+	});
+
+	it('发布人为空时显示破折号', () => {
+		expect(noticePage).toContain(`scope.row.createBy || '—'`);
+	});
+
+	it('查询条件区有发布人筛选并绑定到查询参数', () => {
+		expect(noticePage).toContain('v-model="state.queryForm.createBy"');
+		// prop 必须有，否则重置按钮清不掉这一项
+		expect(noticePage).toMatch(/<el-form-item[^>]*prop="createBy"[\s\S]*?v-model="state\.queryForm\.createBy"/);
 	});
 
 	it('状态列三态各自渲染，非法值不会显示成已发布', () => {

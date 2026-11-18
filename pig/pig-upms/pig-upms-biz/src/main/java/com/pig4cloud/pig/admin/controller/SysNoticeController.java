@@ -81,14 +81,15 @@ public class SysNoticeController {
 	}
 
 	/**
-	 * 按查询条件构造条件构造器：标题模糊匹配，状态精确匹配
+	 * 按查询条件构造条件构造器：标题模糊匹配，状态与发布人精确匹配
 	 * @param sysNotice 查询条件
 	 * @return 查询条件构造器
 	 */
 	private LambdaQueryWrapper<SysNotice> queryWrapper(SysNotice sysNotice) {
 		return Wrappers.<SysNotice>lambdaQuery()
 			.like(StrUtil.isNotBlank(sysNotice.getTitle()), SysNotice::getTitle, sysNotice.getTitle())
-			.eq(StrUtil.isNotBlank(sysNotice.getStatus()), SysNotice::getStatus, sysNotice.getStatus());
+			.eq(StrUtil.isNotBlank(sysNotice.getStatus()), SysNotice::getStatus, sysNotice.getStatus())
+			.eq(StrUtil.isNotBlank(sysNotice.getCreateBy()), SysNotice::getCreateBy, sysNotice.getCreateBy());
 	}
 
 	/**

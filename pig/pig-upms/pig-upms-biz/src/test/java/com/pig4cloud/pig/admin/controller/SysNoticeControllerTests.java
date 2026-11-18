@@ -103,11 +103,29 @@ class SysNoticeControllerTests {
 	}
 
 	@Test
+	void createByFilterIsExactMatch() {
+		SysNoticeService service = mock(SysNoticeService.class);
+		SysNotice query = new SysNotice();
+		query.setCreateBy("admin");
+
+		assertThat(new SysNoticeController(service).getSysNoticePage(new Page<>(1, 10), query).isOk()).isTrue();
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<LambdaQueryWrapper<SysNotice>> condition = ArgumentCaptor.forClass(LambdaQueryWrapper.class);
+		verify(service).page(any(Page.class), condition.capture());
+		LambdaQueryWrapper<SysNotice> wrapper = condition.getValue();
+		assertThat(wrapper.getSqlSegment()).contains("create_by");
+		// 约定 C1：发布人精确匹配，参数值原样是 admin，不能被 like 包成 %admin%，否则 admi 会搜出 admin
+		assertThat(wrapper.getParamNameValuePairs().values()).extracting(value -> String.valueOf(value)).containsExactly("admin");
+	}
+
+	@Test
 	void blankConditionsAreIgnored() {
 		SysNoticeService service = mock(SysNoticeService.class);
 		SysNotice query = new SysNotice();
 		query.setTitle("   ");
 		query.setStatus("");
+		query.setCreateBy("   ");
 
 		new SysNoticeController(service).getSysNoticePage(new Page<>(1, 10), query);
 

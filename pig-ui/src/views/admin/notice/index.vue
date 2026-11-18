@@ -13,6 +13,9 @@
 							<el-option :label="t('notice.offline')" value="2" />
 						</el-select>
 					</el-form-item>
+					<el-form-item :label="t('notice.createBy')" prop="createBy">
+						<el-input :placeholder="t('notice.inputCreateByTip')" style="max-width: 180px" v-model="state.queryForm.createBy" />
+					</el-form-item>
 					<el-form-item>
 						<el-button @click="getDataList" icon="search" type="primary">
 							{{ $t('common.queryBtn') }}
@@ -62,6 +65,9 @@
 					<template #default="scope">{{ scope.row.publishTime || '—' }}</template>
 				</el-table-column>
 				<el-table-column :label="t('notice.createTime')" prop="createTime" width="180" show-overflow-tooltip />
+				<el-table-column :label="t('notice.createBy')" prop="createBy" min-width="120" show-overflow-tooltip>
+					<template #default="scope">{{ scope.row.createBy || '—' }}</template>
+				</el-table-column>
 				<el-table-column :label="$t('common.action')" width="200">
 					<template #default="scope">
 						<el-button icon="edit-pen" @click="formDialogRef.openDialog(scope.row.noticeId)" text type="primary" v-auth="'sys_notice_edit'"
